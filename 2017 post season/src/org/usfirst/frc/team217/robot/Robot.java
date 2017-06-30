@@ -104,7 +104,7 @@ public class Robot extends IterativeRobot {
 	NetworkTable table, visionTable;
 	
 	PID flyWheelPID = new PID(0,0,0);
-	PID visionPID = new PID(0,0,0);
+	PID visionPID = new PID(0.0217,0,0);
 	
 	boolean camNum = false, autonEncReset = true;
 //	double flyWheelRPM = -4400;
@@ -685,7 +685,11 @@ public class Robot extends IterativeRobot {
 	void visionTracking(){
 		
 		if(oper.getRawButton(buttonSquare)){
+			turretMotor.changeControlMode(TalonControlMode.PercentVbus);
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
+		}
+		else {
+			turretMotor.changeControlMode(TalonControlMode.PercentVbus);
 		}
 	}
 	void hood(){
@@ -779,12 +783,16 @@ public class Robot extends IterativeRobot {
 	//wod neg
 	void shooter(){
 				if(oper.getRawButton(buttonShare)){
-					wheelOfDoomMotor.set(-.5);
+					turretMotor.set(-.5);
 				}
 				else{
+					if(oper.getRawButton(buttonOption)) {
+						turretMotor.set(0.5);
+					}
+					else {
 					turretMotor.set(0);
 				}
-		
+				}
 			ballIntakeMotor.set(-(deadBand(oper.getRawAxis(leftBumper))));
 			//shooting
 		
@@ -852,7 +860,7 @@ public class Robot extends IterativeRobot {
 	void smartDash(){
 
 		SmartDashboard.putNumber("Speed", flyWheelMaster.getSpeed());
-		//SmartDashboard.putNumber("COG_X", table.getNumber("COG_X",0));
+		SmartDashboard.putNumber("COG_X", table.getNumber("COG_X",0));
 		//SmartDashboard.putNumber("COG_Y", table.getNumber("COG_Y",0));
 		//SmartDashboard.putNumber("Gear Arm Encoder", gearArmMotor.getEncPosition());
 		SmartDashboard.putNumber("Hood Encoder", hoodEncoder.getValue());

@@ -179,7 +179,7 @@ public class PID {
 		// System.out.printf("%5.2f\t%5.2f\t%5.2f\t%5.2f\n",output,Poutput, Ioutput, Doutput );
 
 		lastOutput=output;
-
+		System.out.println(errorSum);
 		return output;
 	}
 	
