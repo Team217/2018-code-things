@@ -665,6 +665,7 @@ public class Robot extends IterativeRobot {
 		gearManipulator();
 		shooter();
 		hood();
+		climber();
 		drivebase();
 		smartDash();
 		// System.out.println("Front Left: " + leftMaster.getEncPosition() + "
@@ -720,12 +721,28 @@ public class Robot extends IterativeRobot {
 			frontWheelSolenoid.set(false);// traction
 			backWheelSolenoid.set(false);// traction
 		}
+		
+		if(driver.getRawButton(rightTrigger)) {
+			frontWheelSolenoid.set(true);
+			backWheelSolenoid.set(false);
+		}
+	
 
 		if (driver.getRawButton(1)) {
 			rightMaster.setEncPosition(0);
 			rightSlave.setEncPosition(0);
 			leftMaster.setEncPosition(0);
 			leftSlave.setEncPosition(0);
+		}
+	}
+	
+	void climber() {
+		if(driver.getRawButton(leftTrigger)) {
+			climberMaster.set(1);
+		}
+		
+		else {
+			climberMaster.set(0);
 		}
 	}
 
@@ -737,13 +754,13 @@ public class Robot extends IterativeRobot {
 	}
 
 	void gearManipulator(){ 
-
-			if(oper.getRawAxis(rightAnalog) > .2){ //up position for gear arm
-				gearArmMotor.set(normPID(-1400,gearArmMotor.getEncPosition(),0.00049,0));
+			System.out.println(gearArmMotor.getEncPosition());
+			if(oper.getRawAxis(1) > .35){ //up position for gear arm 1264
+				gearArmMotor.set(0.2);
 			}
 			else{
-				if(oper.getRawAxis(rightAnalog) < .2){ //deliver position for gear arm
-					gearArmMotor.set(normPID(-900,gearArmMotor.getEncPosition(),0.00069,0));
+				if(oper.getRawAxis(1) < -.2){ //deliver position for gear arm
+					gearArmMotor.set(-0.35);
 				}
 				else{
 					if(gearArmMotor.getEncPosition() <= -1400){
@@ -790,10 +807,10 @@ public class Robot extends IterativeRobot {
 		if(absVal(table.getNumber("COG_X", 0)) < 2){
 			visionPID.Reset();
 		}
-		if (oper.getRawButton(buttonShare)) {
+		if (driver.getPOV() == 90) {
 			turretMotor.set(-.35);
 		} else {
-			if (oper.getRawButton(buttonOption)) {
+			if (driver.getPOV() == 270) {
 				turretMotor.set(0.35);
 			} else {
 				if (oper.getRawButton(buttonSquare)) {
@@ -873,7 +890,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Speed", flyWheelMaster.getSpeed());
 		SmartDashboard.putNumber("COG_X", table.getNumber("COG_X", 0));
 		// SmartDashboard.putNumber("COG_Y", table.getNumber("COG_Y",0));
-		// SmartDashboard.putNumber("Gear Arm Encoder",
+		 SmartDashboard.putNumber("Gear Arm Encoder", gearArmMotor.getEncPosition());
 		// gearArmMotor.getEncPosition());
 		SmartDashboard.putNumber("Hood Encoder", hoodEncoder.getValue());
 		// SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
@@ -917,7 +934,6 @@ public class Robot extends IterativeRobot {
 		// visionKP = pref.getDouble("VisionP", 0.00217);
 		// autoP = pref.getDouble("AutonGyroP", 0.0099);
 		// visionKI = pref.getDouble("VisionI", 0.00217);
-
 		// autoForwardLeft = pref.getDouble("ForwardLeft", 27);
 		// autoForwardRight = pref.getDouble("ForwardRight", 27);
 
