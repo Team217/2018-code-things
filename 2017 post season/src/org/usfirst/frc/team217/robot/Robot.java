@@ -68,6 +68,8 @@ public class Robot extends IterativeRobot {
 	double flyP, flyI, flyD, flyF;
 	double visionP, visionI, visionD;
 	double vPID;
+	double gearArmP, gearArmI, gearArmD;
+	
 
 	// Drive Motors
 	// left motor is flipped
@@ -102,6 +104,7 @@ public class Robot extends IterativeRobot {
 
 	PID flyWheelPID = new PID(0, 0, 0);
 	PID visionPID = new PID(0.0217, 0, 0);
+	PID gearArmPID = new PID(0, 0, 0);
 
 	boolean camNum = false, autonEncReset = true;
 	// double flyWheelRPM = -4400;
@@ -415,6 +418,8 @@ public class Robot extends IterativeRobot {
 	}
 
 	void gearAuto() {
+		
+		//1400 is intake
 		switch (gearShootAuton) {
 		case forward:
 			leftMaster.set(normPID(-forward, getAverageEnc(), PSTRAIGHT, 0));
@@ -680,11 +685,11 @@ public class Robot extends IterativeRobot {
 		// System.out.println("Hood Position: " +hoodEnc.getValue());
 		// hood.set(-hoodPID(770,hoodEnc.getValue()));
 		// if(oper.getPOV() == 0){
-		// flyWheelRPM = -3550;
-		// }
-		// if(oper.getPOV() == 90){
-		// flyWheelRPM = -3600;
-		// }
+			// flyWheelSpeed = -3550;
+		 //}
+		 //if(oper.getPOV() == 90){
+			// flyWheelSpeed = -3600;
+		 //}
 		// if(oper.getPOV() == 180){
 		// flyWheelRPM = -3650;
 		// }
@@ -754,20 +759,25 @@ public class Robot extends IterativeRobot {
 	}
 
 	void gearManipulator(){ 
-			System.out.println(gearArmMotor.getEncPosition());
-			if(oper.getRawAxis(1) > .35){ //up position for gear arm 1264
-				gearArmMotor.set(0.2);
+		//200 is carry 
+		//800 is drop 
+			if(oper.getRawAxis(1) > .2){ //up position for gear arm 1264
+				gearArmMotor.set(0.35);
 			}
 			else{
 				if(oper.getRawAxis(1) < -.2){ //deliver position for gear arm
 					gearArmMotor.set(-0.35);
 				}
 				else{
-					if(gearArmMotor.getEncPosition() <= -1400){
-						gearArmMotor.set(normPID(-1350,gearArmMotor.getEncPosition(),0.00317,0));
+					if(oper.getRawButton(buttonSquare)){
+						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 200));
+					}
+					else if(oper.getRawButton(buttonX)){
+						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 800));
 					}
 					else{
-						gearArmMotor.set(0.4*deadBand(oper.getY())); //left stick operator
+						gearArmMotor.set(0);
+						gearArmPID.Reset();
 					}
 				}
 			}
@@ -786,6 +796,8 @@ public class Robot extends IterativeRobot {
 				gearArmMotor.setEncPosition(0);
 				turretMotor.setEncPosition(0);
 			}
+			
+			
 		
 	}
 
@@ -923,6 +935,10 @@ public class Robot extends IterativeRobot {
 		visionP = pref.getDouble("visionP", 0);
 		visionI = pref.getDouble("visionI", 0);
 		visionD = pref.getDouble("visionD", 0);
+		
+		gearArmP = pref.getDouble("gearP", 0);
+		gearArmI = pref.getDouble("gearI", 0);
+		gearArmD = pref.getDouble("gearD", 0);
 
 		wheelOfDoomSpeed = pref.getDouble("WheelOfDoom", 1);
 		flyWheelSpeed = pref.getDouble("FlyWheelSpeed", 1);
@@ -944,6 +960,10 @@ public class Robot extends IterativeRobot {
 		visionPID.SetP(visionP);
 		visionPID.SetI(visionI);
 		visionPID.SetD(visionD);
+		
+		gearArmPID.SetP(gearArmP);
+		gearArmPID.SetI(gearArmI);
+		gearArmPID.SetD(gearArmD);
 
 	}
 }
