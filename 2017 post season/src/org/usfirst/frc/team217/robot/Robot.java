@@ -69,7 +69,7 @@ public class Robot extends IterativeRobot {
 	double visionP, visionI, visionD;
 	double vPID;
 	double gearArmP, gearArmI, gearArmD;
-	
+	double hoodP, hoodI, hoodD;	
 
 	// Drive Motors
 	// left motor is flipped
@@ -950,6 +950,10 @@ public class Robot extends IterativeRobot {
 		gearArmP = pref.getDouble("gearP", 0);
 		gearArmI = pref.getDouble("gearI", 0);
 		gearArmD = pref.getDouble("gearD", 0);
+		
+		hoodP = pref.getDouble("hoodP", 0);
+		hoodI = pref.getDouble("hoodI", 0);
+		hoodD = pref.getDouble("hoodD", 0);
 
 		wheelOfDoomSpeed = pref.getDouble("WheelOfDoom", 1);
 		flyWheelSpeed = pref.getDouble("FlyWheelSpeed", 1);
@@ -975,6 +979,10 @@ public class Robot extends IterativeRobot {
 		gearArmPID.SetP(gearArmP);
 		gearArmPID.SetI(gearArmI);
 		gearArmPID.SetD(gearArmD);
+		
+		hoodPID.SetP(hoodP);
+		hoodPID.SetI(hoodI);
+		hoodPID.SetD(hoodD);
 
 	}
 }
