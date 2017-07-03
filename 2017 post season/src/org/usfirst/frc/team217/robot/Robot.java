@@ -825,7 +825,7 @@ public class Robot extends IterativeRobot {
 			if (driver.getPOV() == 270) {
 				turretMotor.set(0.35);
 			} else {
-				if (oper.getRawButton(buttonSquare)) {
+				if (driver.getRawButton(buttonSquare)) {
 					vPID = visionPID.GetOutput(table.getNumber("COG_X", 0), 0);
 					turretMotor.set(vPID);
 
