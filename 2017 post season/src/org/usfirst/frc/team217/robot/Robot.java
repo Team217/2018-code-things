@@ -838,10 +838,12 @@ public class Robot extends IterativeRobot {
 			}
 		}
 		if(oper.getPOV() == 0) {
+			hoodMotor.changeControlMode(TalonControlMode.PercentVbus);
 			wheelRPM = 4110;
 			hoodMotor.set(hoodPID.GetOutput(hoodMotor.getEncPosition(), 770));
 		}
 		if(oper.getPOV() == 180) {
+			hoodMotor.changeControlMode(TalonControlMode.PercentVbus);
 			wheelRPM = 3620;
 			hoodMotor.set(hoodPID.GetOutput(hoodMotor.getEncPosition(), 650));
 		}
@@ -933,7 +935,7 @@ public class Robot extends IterativeRobot {
 		// flyWheelSlave.getOutputCurrent());
 		// SmartDashboard.putNumber("wod Current",
 		// wheelOfDoomMotor.getOutputCurrent());
-		SmartDashboard.putNumber("VisionPID", vPID);
+		SmartDashboard.putNumber("hoodPID", hoodPID.GetOutput(hoodMotor.getEncPosition(), 770));
 
 		// System.out.println(table.getNumber("COG_X",216));
 		// System.out.println(table.getNumber("COG_Y",216));
