@@ -105,7 +105,8 @@ public class Robot extends IterativeRobot {
 	PID flyWheelPID = new PID(0, 0, 0);
 	PID visionPID = new PID(0.0217, 0, 0);
 	PID gearArmPID = new PID(0, 0, 0);
-
+	PID hoodPID = new PID(0,0,0);
+	
 	boolean camNum = false, autonEncReset = true;
 	// double flyWheelRPM = -4400;
 
@@ -762,18 +763,18 @@ public class Robot extends IterativeRobot {
 		//200 is carry 
 		//800 is drop 
 			if(oper.getRawAxis(1) > .2){ //up position for gear arm 1264
-				gearArmMotor.set(0.35);
+				gearArmMotor.set(0.30);
 			}
 			else{
 				if(oper.getRawAxis(1) < -.2){ //deliver position for gear arm
-					gearArmMotor.set(-0.35);
+					gearArmMotor.set(-0.30);
 				}
 				else{
 					if(oper.getRawButton(buttonSquare)){
-						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 200));
+						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 50));
 					}
 					else if(oper.getRawButton(buttonX)){
-						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 800));
+						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 350));
 					}
 					else{
 						gearArmMotor.set(0);
@@ -828,6 +829,7 @@ public class Robot extends IterativeRobot {
 				if (driver.getRawButton(buttonSquare)) {
 					vPID = visionPID.GetOutput(table.getNumber("COG_X", 0), 0);
 					turretMotor.set(vPID);
+					System.out.println(vPID);
 
 				} else {
 					turretMotor.set(0);
@@ -835,7 +837,16 @@ public class Robot extends IterativeRobot {
 				}
 			}
 		}
-		ballIntakeMotor.set(-(deadBand(oper.getRawAxis(leftBumper))));
+		if(oper.getPOV() == 0) {
+			wheelRPM = 4110;
+			hoodMotor.set(hoodPID.GetOutput(hoodMotor.getEncPosition(), 770));
+		}
+		if(oper.getPOV() == 180) {
+			wheelRPM = 3620;
+			hoodMotor.set(hoodPID.GetOutput(hoodMotor.getEncPosition(), 650));
+		}
+		
+		ballIntakeMotor.set(-(deadBand(oper.getRawAxis(leftBumper)))); //Axis set to a bumper?
 		// shooting
 
 		if (oper.getRawButton(buttonTriangle)) {
