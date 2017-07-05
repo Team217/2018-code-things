@@ -29,7 +29,8 @@ public class Robot extends IterativeRobot {
 	final String blueSide = "Blue Auto";
 	final String ballAuton = "40 Ball Auto";
 	final String gearAuton = "Gear and Shoot Auto";
-
+	final String debug = "Debug";
+	
 	final String left = "Left";
 	final String center = "Center";
 	final String right = "Right";
@@ -70,6 +71,7 @@ public class Robot extends IterativeRobot {
 	double vPID;
 	double gearArmP, gearArmI, gearArmD;
 	double hoodP, hoodI, hoodD;	
+	double driveP, driveI, driveD;
 
 	// Drive Motors
 	// left motor is flipped
@@ -106,6 +108,9 @@ public class Robot extends IterativeRobot {
 	PID visionPID = new PID(0.01, 0.0001, 0.01);
 	PID gearArmPID = new PID(0.0005, 0.0000035, 0.001);
 	PID hoodPID = new PID(0.005, 0.0002, 0.001);
+	PID drivePID = new PID(0,0,0);
+	
+	double distance = 0;
 	
 	boolean camNum = false, autonEncReset = true;
 	// double flyWheelRPM = -4400;
@@ -187,6 +192,7 @@ public class Robot extends IterativeRobot {
 
 		auton.addDefault("40 Ball", ballAuton);
 		auton.addObject("10 Ball Gear Auto", gearAuton);
+		auton.addObject("Debug", debug);
 		SmartDashboard.putData("Auton Selection", auton);
 
 		position.addDefault("Left", left);
@@ -286,13 +292,15 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousInit() {
 		encReset();
+		smartDash();
 		sideSelected = (String) side.getSelected();
 		autoSelected = (String) auton.getSelected();
 		positionSelected = (String) position.getSelected();
 		
-		
-		
 		switch (autoSelected) {
+		case debug:
+			debug();
+			break;
 		case gearAuton:
 			gearAutoInit(sideSelected.equals(blueSide));
 			break;
@@ -315,11 +323,21 @@ public class Robot extends IterativeRobot {
 		ballIntakeMotor.setEncPosition(0);
 		horzGyro.reset();
 	}
+	
+	void debug() {
+		leftMaster.set(drivePID.GetOutput(leftMaster.getEncPosition(), distance));
+		rightMaster.set(-drivePID.GetOutput(rightMaster.getEncPosition(), distance));
+	}
 
 	// when boolean blue = true, the bot is on the blue side
 	// when boolean blue = false, bot is on red side
 	void shootingAutoInit(boolean blue) {
-
+		wheelRPM = 4110;
+		flyWheelPID.SetP(.0025);
+		flyWheelPID.SetI(0);
+		flyWheelPID.SetD(0.015);
+		//wheelOfDoomMotor at 45
+		
 		if (blue) {
 			turnAngle = -90;
 			turretAngle = -2590;
@@ -412,11 +430,15 @@ public class Robot extends IterativeRobot {
 
 	@Override
 	public void autonomousPeriodic() {
+		smartDash();
 		if (autoSelected.equals(gearAuton)) {
 			gearAuto();
 		}
 		if (autoSelected.equals(ballAuton)) {
 			shootingAuto();
+		}
+		if (autoSelected.equals(debug)) {
+			debug();
 		}
 	}
 
@@ -836,7 +858,6 @@ public class Robot extends IterativeRobot {
 				if (driver.getRawButton(buttonSquare)) {
 					vPID = visionPID.GetOutput(table.getNumber("COG_X", 0), 0);
 					turretMotor.set(vPID);
-					System.out.println(vPID);
 
 				} else {
 					turretMotor.set(0);
@@ -924,12 +945,10 @@ public class Robot extends IterativeRobot {
 		// gearArmMotor.getEncPosition());
 		SmartDashboard.putNumber("Hood Encoder", hoodEncoder.getValue());
 		// SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
-		// SmartDashboard.putNumber("Front Left Encoder",
-		// leftMaster.getEncPosition());
+		 SmartDashboard.putNumber("Front Left Encoder", leftMaster.getEncPosition());
 		// SmartDashboard.putNumber("Back Left Encoder",
 		// leftSlave.getEncPosition());
-		// SmartDashboard.putNumber("Front Right Encoder",
-		// rightMaster.getEncPosition());
+		 SmartDashboard.putNumber("Front Right Encoder", rightMaster.getEncPosition());
 		// SmartDashboard.putNumber("Back Right Encoder",
 		// rightSlave.getEncPosition());
 		// SmartDashboard.putNumber("Turret Spin Encoder",
@@ -953,8 +972,14 @@ public class Robot extends IterativeRobot {
 		// visionKI = pref.getDouble("VisionI", 0.00217);
 		// autoForwardLeft = pref.getDouble("ForwardLeft", 27);
 		// autoForwardRight = pref.getDouble("ForwardRight", 27);
+		driveP = pref.getDouble("driveP", 0);
+		driveI = pref.getDouble("driveI", 0);
+		driveD = pref.getDouble("driveD", 0);
+		distance = pref.getDouble("Distance", 0);
 
-
+		drivePID.SetP(driveP);
+		drivePID.SetI(driveI); 
+		drivePID.SetD(driveD); 
 
 	}
 }
