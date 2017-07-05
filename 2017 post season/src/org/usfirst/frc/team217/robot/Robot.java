@@ -103,9 +103,9 @@ public class Robot extends IterativeRobot {
 	NetworkTable table, visionTable;
 
 	PID flyWheelPID = new PID(0, 0, 0);
-	PID visionPID = new PID(0.0217, 0, 0);
-	PID gearArmPID = new PID(0, 0, 0);
-	PID hoodPID = new PID(0,0,0);
+	PID visionPID = new PID(0.01, 0.0001, 0.01);
+	PID gearArmPID = new PID(0.0005, 0.0000035, 0.001);
+	PID hoodPID = new PID(0.005, 0.0002, 0.001);
 	
 	boolean camNum = false, autonEncReset = true;
 	// double flyWheelRPM = -4400;
@@ -289,7 +289,9 @@ public class Robot extends IterativeRobot {
 		sideSelected = (String) side.getSelected();
 		autoSelected = (String) auton.getSelected();
 		positionSelected = (String) position.getSelected();
-
+		
+		
+		
 		switch (autoSelected) {
 		case gearAuton:
 			gearAutoInit(sideSelected.equals(blueSide));
@@ -649,6 +651,11 @@ public class Robot extends IterativeRobot {
 		rightMaster.setCurrentLimit(40);
 		leftSlave.setCurrentLimit(40);
 		rightSlave.setCurrentLimit(40);
+		
+		wheelRPM = 3620;
+		flyWheelPID.SetP(0.0025);
+		flyWheelPID.SetI(1.0E-9);
+		flyWheelPID.SetD(0.0072);
 	}
 
 	@Override
@@ -774,7 +781,7 @@ public class Robot extends IterativeRobot {
 						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 50));
 					}
 					else if(oper.getRawButton(buttonX)){
-						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 350));
+						gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 550));
 					}
 					else{
 						gearArmMotor.set(0);
@@ -838,26 +845,24 @@ public class Robot extends IterativeRobot {
 			}
 		}
 		if(oper.getPOV() == 0) {
-			hoodMotor.changeControlMode(TalonControlMode.PercentVbus);
-			wheelRPM = 4110;
-			hoodMotor.set(hoodPID.GetOutput(hoodMotor.getEncPosition(), 770));
+			wheelRPM = 3620;
+		}
+		if(oper.getPOV() == 90) {
+			wheelRPM = 3640;
 		}
 		if(oper.getPOV() == 180) {
-			hoodMotor.changeControlMode(TalonControlMode.PercentVbus);
-			wheelRPM = 3620;
-			hoodMotor.set(hoodPID.GetOutput(hoodMotor.getEncPosition(), 650));
+			wheelRPM = 3660;
+		}
+		if(oper.getPOV() == 270) {
+			wheelRPM = 3680;
 		}
 		
 		ballIntakeMotor.set(-(deadBand(oper.getRawAxis(leftBumper)))); //Axis set to a bumper?
 		// shooting
 
 		if (oper.getRawButton(buttonTriangle)) {
-			// flyWheelMaster.changeControlMode(TalonControlMode.Speed);
 			flyWheelMaster.set(flyWheelSpeed);
-			// flyWheelMaster.set((-normPID(flyWheelRPM,
-			// flyWheelMaster.getEncVelocity(), flyKp, flyKi)));
 			flyWheelMaster.set(-flyWheelPID.GetOutput(flyWheelMaster.getSpeed(), flyWheelSpeed));
-			System.out.println(flyWheelMaster.getSpeed());
 			lifterMotor.set(-1);
 			kickerMotor.set(-1);
 
@@ -868,7 +873,7 @@ public class Robot extends IterativeRobot {
 			kickerMotor.set(0);
 		}
 		if (oper.getRawButton(buttonCircle)) {
-			wheelOfDoomMotor.set(wheelOfDoomSpeed);
+			wheelOfDoomMotor.set(-0.75);
 		} else {
 			if (oper.getRawButton(rightAnalog)) {
 				wheelOfDoomMotor.set(1);
@@ -935,34 +940,13 @@ public class Robot extends IterativeRobot {
 		// flyWheelSlave.getOutputCurrent());
 		// SmartDashboard.putNumber("wod Current",
 		// wheelOfDoomMotor.getOutputCurrent());
-		SmartDashboard.putNumber("hoodPID", hoodPID.GetOutput(hoodMotor.getEncPosition(), 770));
 
 		// System.out.println(table.getNumber("COG_X",216));
 		// System.out.println(table.getNumber("COG_Y",216));
-
-		flyP = pref.getDouble("P", 0);
-		flyI = pref.getDouble("I", 0);
-		flyD = pref.getDouble("D", 0);
 		// flyF = pref.getDouble("F",0);
-
-		visionP = pref.getDouble("visionP", 0);
-		visionI = pref.getDouble("visionI", 0);
-		visionD = pref.getDouble("visionD", 0);
-		
-		gearArmP = pref.getDouble("gearP", 0);
-		gearArmI = pref.getDouble("gearI", 0);
-		gearArmD = pref.getDouble("gearD", 0);
-		
-		hoodP = pref.getDouble("hoodP", 0);
-		hoodI = pref.getDouble("hoodI", 0);
-		hoodD = pref.getDouble("hoodD", 0);
-
-		wheelOfDoomSpeed = pref.getDouble("WheelOfDoom", 1);
-		flyWheelSpeed = pref.getDouble("FlyWheelSpeed", 1);
-
 		// intakeSpeed = pref.getDouble("Intake", 1);
 		// robotSpeed = pref.getDouble("Speed",1);
-		wheelRPM = pref.getDouble("RPM", 3240);
+		wheelRPM = pref.getDouble("RPM", 3620);
 		hoodAngle = pref.getDouble("Hood", 745);
 		// visionKP = pref.getDouble("VisionP", 0.00217);
 		// autoP = pref.getDouble("AutonGyroP", 0.0099);
@@ -970,21 +954,7 @@ public class Robot extends IterativeRobot {
 		// autoForwardLeft = pref.getDouble("ForwardLeft", 27);
 		// autoForwardRight = pref.getDouble("ForwardRight", 27);
 
-		flyWheelPID.SetP(flyP); // 0.1
-		flyWheelPID.SetI(flyI); // 0.0004895
-		flyWheelPID.SetD(flyD); // 0.5
 
-		visionPID.SetP(visionP);
-		visionPID.SetI(visionI);
-		visionPID.SetD(visionD);
-		
-		gearArmPID.SetP(gearArmP);
-		gearArmPID.SetI(gearArmI);
-		gearArmPID.SetD(gearArmD);
-		
-		hoodPID.SetP(hoodP);
-		hoodPID.SetI(hoodI);
-		hoodPID.SetD(hoodD);
 
 	}
 }
