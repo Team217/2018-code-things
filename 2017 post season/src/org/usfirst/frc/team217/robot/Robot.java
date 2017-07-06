@@ -71,6 +71,7 @@ public class Robot extends IterativeRobot {
 	double hoodP, hoodI, hoodD;	
 	double driveP, driveI, driveD;
 	double gyroP, gyroI, gyroD;
+	double turretP, turretI, turretD;
 	
 	// Drive Motors
 	// left motor is flipped
@@ -290,8 +291,8 @@ public class Robot extends IterativeRobot {
 		leftMaster.setEncPosition(0);
 		leftSlave.setEncPosition(0);
 		turretMotor.setEncPosition(0);
-
 	}
+
 
 	@Override
 	public void autonomousInit() {
@@ -329,28 +330,35 @@ public class Robot extends IterativeRobot {
 	}
 	
 	void debug() {
-	/*	leftMaster.set(driveLPID.GetOutput(leftMaster.getEncPosition(), distance));
+		//frontWheelSolenoid.set(true);
+		//backWheelSolenoid.set(true);
+		leftMaster.set(driveLPID.GetOutput(leftMaster.getEncPosition(), -distance));
 		
 		if (absVal(leftMaster.getEncPosition() - distance) < 200) {
 			driveLPID.Reset();
 		}
 		
-		rightMaster.set(driveRPID.GetOutput(rightMaster.getEncPosition(), -distance));
+		rightMaster.set(driveRPID.GetOutput(rightMaster.getEncPosition(), distance));
 		
 		if (absVal(absVal(rightMaster.getEncPosition()) - distance) < 200) {
 			driveRPID.Reset();
 		}
-	*/
 		
-		if (absVal(horzGyro.getAngle() - turnValue) < 2) {
+		if(absVal(horzGyro.getAngle() - turnValue) > turnValue) {
+			double turnSpeed = gyroPID.GetOutput(horzGyro.getAngle(), turnValue);
+			leftMaster.set(-turnSpeed);
+			rightMaster.set(-turnSpeed);
+		}
+		/*if (absVal(horzGyro.getAngle() - turnValue) < 2) {
 			gyroPID.Reset();
 		}
 		
 		frontWheelSolenoid.set(true);
 		backWheelSolenoid.set(true);
-		double	turnSpeed = gyroPID.GetOutput(horzGyro.getAngle(), turnValue);
+		double turnSpeed = gyroPID.GetOutput(horzGyro.getAngle(), turnValue);
 		leftMaster.set(-turnSpeed);
 		rightMaster.set(-turnSpeed);
+		*/
 		
 	}
 
@@ -578,9 +586,19 @@ public class Robot extends IterativeRobot {
 		switch (shootingAuton) {
 		// start revving up before turn
 		case forward:
-			turretMotor.set(normPID(turretAngle, turretMotor.getEncPosition(), 0.0011, 0));
-			leftMaster.set(normPID(-forward, leftMaster.getEncPosition(), PSTRAIGHT, 0));
-			rightMaster.set(normPID(forward, rightMaster.getEncPosition(), PSTRAIGHT, 0));
+			turretMotor.set(turretPID.GetOutput(turretMotor.getEncPosition(), turretAngle)); 
+			leftMaster.set(driveLPID.GetOutput(leftMaster.getEncPosition(), distance));
+			
+			if (absVal(leftMaster.getEncPosition() - distance) < 200) {
+				driveLPID.Reset();
+			}
+			
+			rightMaster.set(driveRPID.GetOutput(rightMaster.getEncPosition(), -distance));
+			
+			if (absVal(absVal(rightMaster.getEncPosition()) - distance) < 200) {
+				driveRPID.Reset();
+			}
+			
 			if (absVal(getAverageEnc()) >= ((absVal(forward)) - 6)) {
 				leftMaster.set(0);
 				rightMaster.set(0);
@@ -592,7 +610,7 @@ public class Robot extends IterativeRobot {
 				shootingAuton = BallAuton.turn;
 			}
 			break;
-
+			
 		case turn:
 			leftMaster.set(normPID(-turnAngle, horzGyro.getAngle(), PTURN, ITURN));
 			rightMaster.set(normPID(turnAngle, horzGyro.getAngle(), PTURN, ITURN));
@@ -776,7 +794,7 @@ public class Robot extends IterativeRobot {
 			backWheelSolenoid.set(false);// traction
 		}
 		
-		if(driver.getRawButton(rightTrigger)) {
+		if(driver.getRawButton(rightTrigger)) { //half and half
 			frontWheelSolenoid.set(true);
 			backWheelSolenoid.set(false);
 		}
@@ -973,6 +991,10 @@ public class Robot extends IterativeRobot {
 		// SmartDashboard.putNumber("wod Current",
 		// wheelOfDoomMotor.getOutputCurrent());
 
+		 SmartDashboard.putNumber("gyroP", 0);
+		 SmartDashboard.putNumber("gyroI", 0);
+		 SmartDashboard.putNumber("gyroD", 0);
+		 
 		// System.out.println(table.getNumber("COG_X",216));
 		// System.out.println(table.getNumber("COG_Y",216));
 		// flyF = pref.getDouble("F",0);
