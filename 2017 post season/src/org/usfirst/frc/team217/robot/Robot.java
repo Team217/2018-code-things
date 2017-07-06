@@ -38,8 +38,6 @@ public class Robot extends IterativeRobot {
 	String sideSelected, autoSelected, positionSelected;
 	// boolean turretFlip=true;
 
-	PIDController gyroPID;
-
 	double flywheelPID;
 
 	boolean turretFlip = true;
@@ -72,7 +70,8 @@ public class Robot extends IterativeRobot {
 	double gearArmP, gearArmI, gearArmD;
 	double hoodP, hoodI, hoodD;	
 	double driveP, driveI, driveD;
-
+	double gyroP, gyroI, gyroD;
+	
 	// Drive Motors
 	// left motor is flipped
 	CANTalon rightMaster, rightSlave, leftMaster, leftSlave;
@@ -108,9 +107,12 @@ public class Robot extends IterativeRobot {
 	PID visionPID = new PID(0.01, 0.0001, 0.01);
 	PID gearArmPID = new PID(0.0005, 0.0000035, 0.001);
 	PID hoodPID = new PID(0.005, 0.0002, 0.001);
-	PID drivePID = new PID(0,0,0);
+	PID driveRPID = new PID(0,0,0);
+	PID driveLPID = new PID(0,0,0);
+	PID turretPID = new PID(0,0,0);
+	PID gyroPID = new PID(0,0,0);
 	
-	double distance = 0;
+	double distance, turnValue;
 	
 	boolean camNum = false, autonEncReset = true;
 	// double flyWheelRPM = -4400;
@@ -141,6 +143,8 @@ public class Robot extends IterativeRobot {
 	DriveForward driveAuto;
 	Timer gearTime; // Placed here for reference, encoder will be used instead
 
+	
+	
 	// shootingAuto variables
 	// turn for blue = -90
 	// turn for red = 87
@@ -214,7 +218,7 @@ public class Robot extends IterativeRobot {
 		driver = new Joystick(0);
 		oper = new Joystick(1);
 
-		// resetSwitch = new DigitalInput(1);
+		resetSwitch = new DigitalInput(1);
 
 		// Drive Motors
 		rightMaster = new CANTalon(15);
@@ -296,10 +300,10 @@ public class Robot extends IterativeRobot {
 		sideSelected = (String) side.getSelected();
 		autoSelected = (String) auton.getSelected();
 		positionSelected = (String) position.getSelected();
-		
+
 		switch (autoSelected) {
 		case debug:
-			debug();
+			gyroPID.Reset();
 			break;
 		case gearAuton:
 			gearAutoInit(sideSelected.equals(blueSide));
@@ -325,8 +329,29 @@ public class Robot extends IterativeRobot {
 	}
 	
 	void debug() {
-		leftMaster.set(drivePID.GetOutput(leftMaster.getEncPosition(), distance));
-		rightMaster.set(-drivePID.GetOutput(rightMaster.getEncPosition(), distance));
+	/*	leftMaster.set(driveLPID.GetOutput(leftMaster.getEncPosition(), distance));
+		
+		if (absVal(leftMaster.getEncPosition() - distance) < 200) {
+			driveLPID.Reset();
+		}
+		
+		rightMaster.set(driveRPID.GetOutput(rightMaster.getEncPosition(), -distance));
+		
+		if (absVal(absVal(rightMaster.getEncPosition()) - distance) < 200) {
+			driveRPID.Reset();
+		}
+	*/
+		
+		if (absVal(horzGyro.getAngle() - turnValue) < 2) {
+			gyroPID.Reset();
+		}
+		
+		frontWheelSolenoid.set(true);
+		backWheelSolenoid.set(true);
+		double	turnSpeed = gyroPID.GetOutput(horzGyro.getAngle(), turnValue);
+		leftMaster.set(-turnSpeed);
+		rightMaster.set(-turnSpeed);
+		
 	}
 
 	// when boolean blue = true, the bot is on the blue side
@@ -466,8 +491,8 @@ public class Robot extends IterativeRobot {
 				gearShootAuton = GearAuton.pivot;
 			}
 
-			leftMaster.set(gyroPID(turnAngle, PTURN));
-			rightMaster.set(gyroPID(turnAngle, PTURN));
+	//		leftMaster.set(gyroPID(turnAngle, PTURN));
+	//		rightMaster.set(gyroPID(turnAngle, PTURN));
 
 			if ((absVal(horzGyro.getAngle() - turnAngle)) < 1) {
 				leftMaster.set(0);
@@ -584,22 +609,12 @@ public class Robot extends IterativeRobot {
 			break;
 
 		case tacticalReload:
-			ballIntakeMotor.set(normPID(0, ballIntakeMotor.getEncPosition(), 0.00049, 0)); // Real
-																							// dumb
-																							// pid
-																							// values,
-																							// what
-																							// the
-																							// heck
-																							// is
-																							// gweely
-																							// doing
+			gearArmMotor.set(gearArmPID.GetOutput(gearArmMotor.getEncPosition(), 0));
 			leftMaster.set(.8);
 			rightMaster.set(-.8);
-			turretMotor.set(normPID(turretAngle, turretMotor.getEncPosition(), 0.0011, 0)); // More
-																							// dumb
-																							// pid
-																							// what
+			turretMotor.set(turretPID.GetOutput(turretMotor.getEncPosition(), turretAngle)); 
+			
+			
 			if (turretMotor.getEncPosition() >= (turretAngle - 50)) {
 				leftMaster.set(0);
 				rightMaster.set(0);
@@ -743,9 +758,13 @@ public class Robot extends IterativeRobot {
 		double speed = deadBand(-driver.getY());
 		double turn = deadBand(-driver.getZ());
 
-		leftMaster.set((-speed + turn));
 		rightMaster.set((speed + turn));
+		if(absVal(speed) > 0.5){
+			speed *= .91;
+		} 
+		leftMaster.set((-speed + turn));
 
+		
 		// Solenoids
 		if (driver.getRawButton(leftBumper)) {
 			frontWheelSolenoid.set(true); // omni
@@ -844,7 +863,7 @@ public class Robot extends IterativeRobot {
 		ballIntakeMotor.set(deadBand(oper.getRawAxis(rightAnalog)));
 	}
 
-	// wod neg
+	
 	void shooter() {
 		if(absVal(table.getNumber("COG_X", 0)) < 2){
 			visionPID.Reset();
@@ -926,16 +945,6 @@ public class Robot extends IterativeRobot {
 		}
 	}
 
-	double gyroPID(double target, double pVal) {
-		double gyroError = target - horzGyro.getAngle();
-
-		if (absVal(gyroError) < 2) {
-			return 0;
-		} else {
-			return gyroError * pVal;
-		}
-	}
-
 	void smartDash() {
 
 		SmartDashboard.putNumber("Speed", flyWheelMaster.getSpeed());
@@ -944,11 +953,15 @@ public class Robot extends IterativeRobot {
 		 SmartDashboard.putNumber("Gear Arm Encoder", gearArmMotor.getEncPosition());
 		// gearArmMotor.getEncPosition());
 		SmartDashboard.putNumber("Hood Encoder", hoodEncoder.getValue());
-		// SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
+		 SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
 		 SmartDashboard.putNumber("Front Left Encoder", leftMaster.getEncPosition());
 		// SmartDashboard.putNumber("Back Left Encoder",
 		// leftSlave.getEncPosition());
 		 SmartDashboard.putNumber("Front Right Encoder", rightMaster.getEncPosition());
+		 SmartDashboard.putNumber("RightM current", rightMaster.getOutputCurrent());
+		 SmartDashboard.putNumber("leftM current", leftMaster.getOutputCurrent());
+		 SmartDashboard.putNumber("RightS current", rightSlave.getOutputCurrent());
+		 SmartDashboard.putNumber("leftS current", leftSlave.getOutputCurrent());
 		// SmartDashboard.putNumber("Back Right Encoder",
 		// rightSlave.getEncPosition());
 		// SmartDashboard.putNumber("Turret Spin Encoder",
@@ -976,10 +989,22 @@ public class Robot extends IterativeRobot {
 		driveI = pref.getDouble("driveI", 0);
 		driveD = pref.getDouble("driveD", 0);
 		distance = pref.getDouble("Distance", 0);
+		gyroP = pref.getDouble("gyroP", 0);
+		gyroI = pref.getDouble("gyroI", 0);
+		gyroD = pref.getDouble("gyroD", 0);
 
-		drivePID.SetP(driveP);
-		drivePID.SetI(driveI); 
-		drivePID.SetD(driveD); 
+		turnValue = pref.getDouble("turnValue", 0);
+		
+		gyroPID.SetP(gyroP);
+		gyroPID.SetI(gyroI); 
+		gyroPID.SetD(gyroD); 
+		
+		driveRPID.SetP(driveP);
+		driveRPID.SetI(driveI); 
+		driveRPID.SetD(driveD); 
+		driveLPID.SetP(driveP);
+		driveLPID.SetI(driveI); 
+		driveLPID.SetD(driveD); 
 
 	}
 }
