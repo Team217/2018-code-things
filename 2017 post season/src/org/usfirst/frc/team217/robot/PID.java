@@ -43,7 +43,7 @@ public class PID {
 	}
 	public void SetI(double i)
 	{
-		if(I!=0){
+		if(i!=0){
 			errorSum=errorSum*I/i;
 			}
 		if(maxIOutput!=0){
@@ -179,7 +179,7 @@ public class PID {
 		// System.out.printf("%5.2f\t%5.2f\t%5.2f\t%5.2f\n",output,Poutput, Ioutput, Doutput );
 
 		lastOutput=output;
-		System.out.println(errorSum);
+		//System.out.println(errorSum);
 		return output;
 	}
 	
