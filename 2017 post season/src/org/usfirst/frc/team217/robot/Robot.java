@@ -297,7 +297,7 @@ public class Robot extends IterativeRobot {
 		
 		gearCarry = 50;
 		gearPlace = 435;
-		gearDrop = 1000;
+		gearDrop = 1100;
 	}
 
 
@@ -308,7 +308,11 @@ public class Robot extends IterativeRobot {
 		sideSelected = (String) side.getSelected();
 		autoSelected = (String) auton.getSelected();
 		positionSelected = (String) position.getSelected();
-
+		lifterMotor.set(0);
+		kickerMotor.set(0);
+		wheelOfDoomMotor.set(0);
+		flyWheelMaster.set(0);
+		
 		switch (autoSelected) {
 		case debug:
 			gyroPID.Reset();
@@ -414,7 +418,6 @@ public class Robot extends IterativeRobot {
 		backWheelSolenoid.set(false);
 		
 		hoodAngle = 770;
-		reverse = 700;
 		wheelRPM = -4110;
 	
 		
@@ -440,11 +443,11 @@ public class Robot extends IterativeRobot {
 			forward = -3500
 					;
 			if (blue) {
-				turretAngle = -1600;
-
+				turretAngle = -1700;
+				reverse = 1000;
 			} else {
-				turretAngle = 8000;
-
+				turretAngle = -7400;
+				reverse = -1000;
 			}
 			break;
 
@@ -702,7 +705,7 @@ public class Robot extends IterativeRobot {
 		double avgError = (-leftError + rightError)/2;
 		
 		frontWheelSolenoid.set(true);
-		backWheelSolenoid.set(false);
+		backWheelSolenoid.set(false);					//Switch between red and blue
 		
 		
 		leftMaster.set(driveSpeedLeft - turnSpeed);
