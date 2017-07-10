@@ -799,7 +799,7 @@ public class Robot extends IterativeRobot {
 		flyWheelPID.SetI(1.0E-9);
 		flyWheelPID.SetD(0.0072);
 		
-		gearPlace = 520;
+		gearPlace = 477;
 	}
 
 	@Override
@@ -964,7 +964,8 @@ public class Robot extends IterativeRobot {
 				if (driver.getRawButton(buttonSquare)) {
 					turretMotor.set(vPID);
 
-				} else {
+				} 
+				else {
 					if(turretFlip){
 						autoTurret(-7600);
 					}
@@ -1050,26 +1051,27 @@ public class Robot extends IterativeRobot {
 	}
 
 	void smartDash() {
-
-		SmartDashboard.putNumber("Speed", flyWheelMaster.getSpeed());
 		SmartDashboard.putNumber("COG_X", table.getNumber("COG_X", 0));
-		// SmartDashboard.putNumber("COG_Y", table.getNumber("COG_Y",0));
 		SmartDashboard.putNumber("Gear Arm Encoder", gearArmMotor.getEncPosition());
-		// gearArmMotor.getEncPosition());
 		SmartDashboard.putNumber("Hood Encoder", hoodEncoder.getValue());
-		SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
+		SmartDashboard.putNumber("Turret Encoder", turretMotor.getEncPosition());
 		SmartDashboard.putNumber("Front Left Encoder", leftMaster.getEncPosition());
+		SmartDashboard.putNumber("Front Right Encoder", rightMaster.getEncPosition());
+		
+		//SmartDashboard.putNumber("Speed", flyWheelMaster.getSpeed());
+		// SmartDashboard.putNumber("COG_Y", table.getNumber("COG_Y",0));
+		// gearArmMotor.getEncPosition());
+		//SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
 		// SmartDashboard.putNumber("Back Left Encoder",
 		// leftSlave.getEncPosition());
-		SmartDashboard.putNumber("Front Right Encoder", rightMaster.getEncPosition());
-		SmartDashboard.putNumber("RightM current", rightMaster.getOutputCurrent());
-		SmartDashboard.putNumber("leftM current", leftMaster.getOutputCurrent());
-		SmartDashboard.putNumber("RightS current", rightSlave.getOutputCurrent());
-		SmartDashboard.putNumber("leftS current", leftSlave.getOutputCurrent());
-		SmartDashboard.putNumber("turn speed", turnSpeed);
+		
+		//SmartDashboard.putNumber("RightM current", rightMaster.getOutputCurrent());
+		//SmartDashboard.putNumber("leftM current", leftMaster.getOutputCurrent());
+		//SmartDashboard.putNumber("RightS current", rightSlave.getOutputCurrent());
+		//SmartDashboard.putNumber("leftS current", leftSlave.getOutputCurrent());
+		//SmartDashboard.putNumber("turn speed", turnSpeed);
 		// SmartDashboard.putNumber("Back Right Encoder",
 		// rightSlave.getEncPosition());
-		SmartDashboard.putNumber("Turret Encoder", turretMotor.getEncPosition());
 		// SmartDashboard.putNumber("Fly Wheel Master Current",
 		// flyWheelMaster.getOutputCurrent());
 		// SmartDashboard.putNumber("Fly Wheel Slave Current",
