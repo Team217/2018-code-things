@@ -41,6 +41,7 @@ public class Robot extends IterativeRobot {
 	double flywheelPID;
 
 	boolean turretFlip = true;
+	boolean hoodRaise = true;
 
 	// Joysticks
 	Joystick oper, driver;
@@ -88,7 +89,18 @@ public class Robot extends IterativeRobot {
 	CANTalon gearArmMotor, gearIntakeMotor;
 
 	// Solenoids
-	Solenoid backWheelSolenoid, frontWheelSolenoid, ballIntakeSolenoid;//ballIntakeSolenoid is the flap above ball intake, must be held not toggled
+	Solenoid backWheelSolenoid, frontWheelSolenoid, ballIntakeSolenoid;// ballIntakeSolenoid
+																		// is
+																		// the
+																		// flap
+																		// above
+																		// ball
+																		// intake,
+																		// must
+																		// be
+																		// held
+																		// not
+																		// toggled
 
 	// Gyro
 	ADXRS450_Gyro horzGyro;
@@ -292,7 +304,6 @@ public class Robot extends IterativeRobot {
 		turretMotor.setEncPosition(0);
 
 		gearCarry = 50;
-		gearPlace = 435;
 		gearDrop = 1100;
 	}
 
@@ -399,7 +410,7 @@ public class Robot extends IterativeRobot {
 		// shootingRPM = -4450; // Change RPM through testing, increase value
 		// for both
 		// high and long shots, use hood vale
-	
+
 		turretMotor.setEncPosition(0);
 		frontWheelSolenoid.set(true);
 		backWheelSolenoid.set(false);
@@ -418,6 +429,7 @@ public class Robot extends IterativeRobot {
 
 		hoodAngle = 770;
 		wheelRPM = -4110;
+		gearPlace = 435;
 
 		gearShootAuton = GearAuton.forward;
 
@@ -429,20 +441,20 @@ public class Robot extends IterativeRobot {
 			turretAngle = -7600;
 			wheelRPM = 0;
 			shoot = false;
-		break;
+			break;
 
 		case center:
 			turnAngle = 0;
 			forward = -3200;
 			reverse = 1000;
 			shoot = true;
-			
+
 			if (blue) {
 				turretAngle = -1700;
-				
+
 			} else {
 				turretAngle = -7400;
-			
+
 			}
 			break;
 
@@ -450,8 +462,8 @@ public class Robot extends IterativeRobot {
 			turnAngle = -45;
 			forward = 5650;
 			turretAngle = -7400;
-			
-		break;
+
+			break;
 
 		}
 
@@ -493,7 +505,7 @@ public class Robot extends IterativeRobot {
 			autoTurret(turretAngle);
 			autoGearArm(gearPlace);
 			autoShoot(wheelRPM);
-			
+
 			if (autoDrive(forward) < 150) {
 				leftMaster.set(0);
 				rightMaster.set(0);
@@ -509,13 +521,12 @@ public class Robot extends IterativeRobot {
 
 					gearShootAuton = GearAuton.turn;
 
-				}
-				else {
+				} else {
 					gearShootAuton = GearAuton.drop;
 				}
 			}
-		break;
-			
+			break;
+
 		case turn:
 			autoTurret(turretAngle);
 			if ((absVal(autoTurn(turnAngle)) < 1)) {
@@ -528,12 +539,11 @@ public class Robot extends IterativeRobot {
 				horzGyro.reset();
 				resetPID();
 				Timer.delay(.5);
-			
+
 				gearShootAuton = GearAuton.forward;
 			}
 			break;
 
-		
 		case drop:
 			autoHood(hoodAngle);
 			autoTurret(turretAngle);
@@ -542,8 +552,8 @@ public class Robot extends IterativeRobot {
 				leftMaster.set(0);
 				rightMaster.set(0);
 				gearArmMotor.set(0);
-				if (shoot){
-				gearShootAuton = GearAuton.align;
+				if (shoot) {
+					gearShootAuton = GearAuton.align;
 				}
 			}
 			break;
@@ -583,7 +593,7 @@ public class Robot extends IterativeRobot {
 
 	void shootingAuto() {
 		ballIntakeSolenoid.set(true);
-		
+
 		switch (shootingAuton) {
 		// start revving up before turn
 		case forward:
@@ -609,7 +619,7 @@ public class Robot extends IterativeRobot {
 				rightMaster.set(0);
 				leftMaster.setEncPosition(0);
 				rightMaster.setEncPosition(0);
-				
+
 				shootingAuton = BallAuton.load;
 			}
 			break;
@@ -670,14 +680,13 @@ public class Robot extends IterativeRobot {
 
 	double autoDrive(double target) {
 		gyroPID.SetPID(.0075, 0, 0);
-		
+
 		driveSpeedLeft = driveLPID.GetOutput(leftMaster.getEncPosition(), -target);
 		driveSpeedRight = driveRPID.GetOutput(rightMaster.getEncPosition(), target);
 		turnSpeed = gyroPID.GetOutput(horzGyro.getAngle(), 0);
 		System.out.println("DSL " + driveSpeedLeft);
 		System.out.println("DSR " + driveSpeedRight);
 		System.out.println("turnspeed " + turnSpeed);
-		
 
 		double leftError = -target - leftMaster.getEncPosition();
 		double rightError = target - rightMaster.getEncPosition();
@@ -703,7 +712,7 @@ public class Robot extends IterativeRobot {
 	}
 
 	double autoTurn(double target) {
-		gyroPID.SetPID(0.005,  0.0001, 0.03);
+		gyroPID.SetPID(0.005, 0.0001, 0.03);
 		double turnError = target - horzGyro.getAngle();
 		if (absVal(horzGyro.getAngle() - target) < 2) {
 			gyroPID.Reset();
@@ -738,6 +747,7 @@ public class Robot extends IterativeRobot {
 
 		else {
 			turretMotor.set(0);
+			turretFlip = false;
 		}
 
 		return absVal(turretError);
@@ -771,7 +781,8 @@ public class Robot extends IterativeRobot {
 
 	public void teleopInit() {
 		ballIntakeSolenoid.set(false);
-		
+		turretFlip = true;
+
 		flyWheelMaster.setEncPosition(0);
 		rightMaster.setEncPosition(0);
 		rightSlave.setEncPosition(0);
@@ -787,15 +798,12 @@ public class Robot extends IterativeRobot {
 		flyWheelPID.SetP(0.0025);
 		flyWheelPID.SetI(1.0E-9);
 		flyWheelPID.SetD(0.0072);
+		
+		gearPlace = 520;
 	}
 
 	@Override
 	public void teleopPeriodic() {
-
-		if (turretMotor.getEncPosition() <= -4125) {
-			turretFlip = false;
-		}
-
 		// System.out.println("rightMaster: " + rightMaster.getEncPosition() +
 		// "leftMaster: " + leftMaster.getEncPosition() + "rightSlave: " +
 		// rightSlave.getEncPosition() + "leftSlave: " +
@@ -805,8 +813,6 @@ public class Robot extends IterativeRobot {
 		} else {
 			climberMaster.set(0);
 		}
-		
-		
 
 		gearManipulator();
 		shooter();
@@ -823,80 +829,59 @@ public class Robot extends IterativeRobot {
 	}
 
 	void hood() {
-		// System.out.println("Hood Position: " +hoodEnc.getValue());
-		// hood.set(-hoodPID(770,hoodEnc.getValue()));
-		// if(oper.getPOV() == 0){
-		// flyWheelSpeed = -3550;
-		// }
-		// if(oper.getPOV() == 90){
-		// flyWheelSpeed = -3600;
-		// }
-		// if(oper.getPOV() == 180){
-		// flyWheelRPM = -3650;
-		// }
-		// if(oper.getPOV() == 270){
-		// flyWheelRPM = -3700;
-		// }
-
-		if (oper.getRawButton(rightBumper)) {
-			hoodMotor.set(.5);
-		} else {
-			if (oper.getRawButton(rightTrigger)) {
-				hoodMotor.set(-.5);
-			} else {
-				hoodMotor.set(0);
+		if(hoodRaise){
+			if(autoHood(640) < 20){
+				hoodRaise = false;
 			}
 		}
-
-		if (driver.getRawButton(buttonCircle)) {
-			hoodMotor.set(-hoodPID.GetOutput(hoodEncoder.getValue(), hoodAngle));
+		else{
+			if (oper.getRawButton(rightBumper)) {
+				hoodMotor.set(.5);
+			} else {
+				if (oper.getRawButton(rightTrigger)) {
+					hoodMotor.set(-.5);
+				} else {
+					hoodMotor.set(0);
+				}
+			}
 		}
-
+		
 	}
 
 	void drivebase() {
-		if(driver.getRawButton(buttonSquare)){
-			horzGyro.reset();
+
+		gyroPID.Reset();
+		double speed = deadBand(-driver.getY());
+		double turn = deadBand(-driver.getZ());
+
+		rightMaster.set((speed + turn));
+		if (absVal(speed) > 0.5) {
+			speed *= .91;
 		}
-		
-		if(driver.getRawButton(14)){
-			autoTurn(turnValue);
+		leftMaster.set((-speed + turn));
+
+		// Solenoids
+		if (driver.getRawButton(leftBumper)) {
+			frontWheelSolenoid.set(true); // omni
+			backWheelSolenoid.set(true); // omni
 		}
-		
-		else{
-			gyroPID.Reset();
-			double speed = deadBand(-driver.getY());
-			double turn = deadBand(-driver.getZ());
 
-			rightMaster.set((speed + turn));
-			if (absVal(speed) > 0.5) {
-				speed *= .91;
-			}
-			leftMaster.set((-speed + turn));
+		if (driver.getRawButton(rightBumper)) {
+			frontWheelSolenoid.set(false);// traction
+			backWheelSolenoid.set(false);// traction
+		}
 
-			
-			// Solenoids
-			if (driver.getRawButton(leftBumper)) {
-				frontWheelSolenoid.set(true); // omni
-				backWheelSolenoid.set(true); // omni
-			}
+		if (driver.getRawButton(rightTrigger)) { // half and half
+			frontWheelSolenoid.set(true);
+			backWheelSolenoid.set(false);
+		}
 
-			if (driver.getRawButton(rightBumper)) {
-				frontWheelSolenoid.set(false);// traction
-				backWheelSolenoid.set(false);// traction
-			}
+		if (driver.getRawButton(1)) {
+			rightMaster.setEncPosition(0);
+			rightSlave.setEncPosition(0);
+			leftMaster.setEncPosition(0);
+			leftSlave.setEncPosition(0);
 
-			if (driver.getRawButton(rightTrigger)) { // half and half
-				frontWheelSolenoid.set(true);
-				backWheelSolenoid.set(false);
-			}
-
-			if (driver.getRawButton(1)) {
-				rightMaster.setEncPosition(0);
-				rightSlave.setEncPosition(0);
-				leftMaster.setEncPosition(0);
-				leftSlave.setEncPosition(0);
-			}
 		}
 	}
 
@@ -966,6 +951,7 @@ public class Robot extends IterativeRobot {
 	}
 
 	void shooter() {
+		
 		if (absVal(table.getNumber("COG_X", 0)) < 2) {
 			visionPID.Reset();
 		}
@@ -979,8 +965,13 @@ public class Robot extends IterativeRobot {
 					turretMotor.set(vPID);
 
 				} else {
-					turretMotor.set(0);
-					visionPID.Reset();
+					if(turretFlip){
+						autoTurret(-7600);
+					}
+					else{
+						turretMotor.set(0);
+						visionPID.Reset();
+					}
 				}
 			}
 		}
@@ -1092,21 +1083,21 @@ public class Robot extends IterativeRobot {
 		// driveI = pref.getDouble("driveI", 0);
 		// driveD = pref.getDouble("driveD", 0);
 		// distance = pref.getDouble("Distance", 0);
-//		gyroP = pref.getDouble("gyroP", 0);
-//		gyroI = pref.getDouble("gyroI", 0);
-//		gyroD = pref.getDouble("gyroD", 0);
-//		// turretP = pref.getDouble("turretP", 0);
-//		// turretI = pref.getDouble("turretI", 0);
-//		// turretD = pref.getDouble("turretD", 0);
-//		// hoodP = pref.getDouble("hoodP", 0);
-//		// hoodI = pref.getDouble("hoodI", 0);
-//		// hoodD = pref.getDouble("hoodD", 0);
-//		// turnSpeed = pref.getDouble("turnSpeed", 0);
-//		turnValue = pref.getDouble("turnValue", 0);
-//
-//		gyroPID.SetP(gyroP);
-//		gyroPID.SetI(gyroI);
-//		gyroPID.SetD(gyroD);
+		// gyroP = pref.getDouble("gyroP", 0);
+		// gyroI = pref.getDouble("gyroI", 0);
+		// gyroD = pref.getDouble("gyroD", 0);
+		// // turretP = pref.getDouble("turretP", 0);
+		// // turretI = pref.getDouble("turretI", 0);
+		// // turretD = pref.getDouble("turretD", 0);
+		// // hoodP = pref.getDouble("hoodP", 0);
+		// // hoodI = pref.getDouble("hoodI", 0);
+		// // hoodD = pref.getDouble("hoodD", 0);
+		// // turnSpeed = pref.getDouble("turnSpeed", 0);
+		// turnValue = pref.getDouble("turnValue", 0);
+		//
+		// gyroPID.SetP(gyroP);
+		// gyroPID.SetI(gyroI);
+		// gyroPID.SetD(gyroD);
 
 		// driveRPID.SetP(driveP);
 		// driveRPID.SetI(driveI);
