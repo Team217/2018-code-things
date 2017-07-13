@@ -829,7 +829,7 @@ public class Robot extends IterativeRobot {
 
 	public void teleopInit() {
 		ballIntakeSolenoid.set(false);
-		turretFlip = true;
+		turretFlip = false;
 
 		flyWheelMaster.setEncPosition(0);
 		rightMaster.setEncPosition(0);
@@ -853,7 +853,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		// System.out.println("rightMaster: " + rightMaster.getEncPosition() +
-		// "leftMaster: " + leftMaster.getEncPosition() + "rightSlave: " +
+		// "leftMaster: " + leftMaster.getEncPosition() + "rightSlave: " +5
 		// rightSlave.getEncPosition() + "leftSlave: " +
 		// leftSlave.getEncPosition());
 		if (driver.getRawButton(leftTrigger)) {
