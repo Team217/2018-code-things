@@ -117,7 +117,7 @@ public class Robot extends IterativeRobot {
 	NetworkTable table, visionTable;
 
 	PID flyWheelPID = new PID(0.0025, 0, 0.015);
-	PID visionPID = new PID(0.01, 0.0001, 0.01);
+	PID visionPID = new PID(0.01, 0.00015, 0.01);
 	PID gearArmPID = new PID(0.0005, 0.0000035, 0.001);
 	PID hoodPID = new PID(0.005, 0.0002, 0.001);
 	PID driveRPID = new PID(0.0003, 0, .0012);
@@ -142,7 +142,7 @@ public class Robot extends IterativeRobot {
 		forward, // same for each side of the field, different for positions
 		turn, // same for each side of the field, different for positions
 		drop, // same
-		align, // different for all
+		spin, align, // different for all
 		shoot, // different for positions
 	}
 
@@ -178,6 +178,7 @@ public class Robot extends IterativeRobot {
 	// will be used in both shootingAuton and gearAuton
 	double turretAngle; // change based on field
 	double turnAngle;// change based on field
+	boolean spin;
 
 	// PID variables
 	double cumulativePIDError = 0;
@@ -187,6 +188,8 @@ public class Robot extends IterativeRobot {
 	final double PTURN = .02;
 	// PID I value for turning
 	final double ITURN = .0002;
+
+	int directionMultiplier;
 
 	SendableChooser<String> side = new SendableChooser<>();
 	SendableChooser<String> auton = new SendableChooser<>();
@@ -393,16 +396,18 @@ public class Robot extends IterativeRobot {
 
 		if (blue) {
 			turnAngle = -85;
-			turretAngle = -2900;
-			forward = -5250;
+			turretAngle = -3000;
+			forward = -5550;
+			directionMultiplier = 1;
 			frontWheelSolenoid.set(true);
 			backWheelSolenoid.set(false);
 		}
 
 		else {
 			turnAngle = 85;
-			turretAngle = -2700;
-			forward = 5250;
+			turretAngle = -2600;
+			forward = 5800;
+			directionMultiplier = -1;
 			frontWheelSolenoid.set(false);
 			backWheelSolenoid.set(true);
 		}
@@ -427,9 +432,14 @@ public class Robot extends IterativeRobot {
 		frontWheelSolenoid.set(true);
 		backWheelSolenoid.set(false);
 
-		hoodAngle = 770;
+		hoodAngle = 785;
+		//FLYWHEEL IS NEGATIVE
 		wheelRPM = -4110;
 		gearPlace = 435;
+
+		flyWheelPID.SetP(.0025);
+		flyWheelPID.SetI(0);
+		flyWheelPID.SetD(0.015);
 
 		gearShootAuton = GearAuton.forward;
 
@@ -445,23 +455,33 @@ public class Robot extends IterativeRobot {
 
 		case center:
 			turnAngle = 0;
-			forward = -3200;
-			reverse = 1000;
+			forward = -3300;
+			reverse = 2000;
+			
 			shoot = true;
 
 			if (blue) {
-				turretAngle = -1700;
+				turretAngle = -2050;
+				wheelRPM = -4250;
 
 			} else {
-				turretAngle = -7400;
-
+				turretAngle = -150;
+				wheelRPM = -4430;
+				spin = true;
+				//FLYWHEEL IS NEGATIVE
+				
 			}
 			break;
 
 		case right:
-			turnAngle = -45;
-			forward = 5650;
-			turretAngle = -7400;
+			turnAngle = -60;
+			forward = -2900;
+			reverse = 1000;
+			turretAngle = -7600;
+			wheelRPM = 0;
+			shoot = false;
+			
+			
 
 			break;
 
@@ -506,7 +526,7 @@ public class Robot extends IterativeRobot {
 			autoGearArm(gearPlace);
 			autoShoot(wheelRPM);
 
-			if (autoDrive(forward) < 150) {
+			if (autoDrive(forward) < 175) {
 				leftMaster.set(0);
 				rightMaster.set(0);
 				turretMotor.set(0);
@@ -529,6 +549,8 @@ public class Robot extends IterativeRobot {
 
 		case turn:
 			autoTurret(turretAngle);
+			autoShoot(wheelRPM);
+
 			if ((absVal(autoTurn(turnAngle)) < 1)) {
 				leftMaster.set(0);
 				rightMaster.set(0);
@@ -547,23 +569,45 @@ public class Robot extends IterativeRobot {
 		case drop:
 			autoHood(hoodAngle);
 			autoTurret(turretAngle);
+			autoShoot(wheelRPM);
 
 			if (autoGearArm(gearDrop) < 100 & autoDrive(reverse) < 650) {
 				leftMaster.set(0);
 				rightMaster.set(0);
 				gearArmMotor.set(0);
-				if (shoot) {
-					gearShootAuton = GearAuton.align;
+				if (shoot & autoTurret(turretAngle) < 150) {
+					if (spin) {
+						gearShootAuton = GearAuton.spin;
+					} else {
+						gearShootAuton = GearAuton.align;
+					}
 				}
+
+			}
+			break;
+
+		case spin:
+			autoHood(hoodAngle);
+			autoTurret(turretAngle);
+			autoShoot(wheelRPM);
+
+			if ((absVal(autoTurn(-80)) < 1)) {
+				leftMaster.set(0);
+				rightMaster.set(0);
+				turretMotor.set(0);
+				Timer.delay(1);
+				
+				gearShootAuton = GearAuton.align;
 			}
 			break;
 
 		case align:
+			table.getNumber("COG_X", 0);
 			autoHood(hoodAngle);
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 			autoShoot(wheelRPM);
 
-			if (absVal(table.getNumber("COG_X", 100)) < 2) {
+			if (absVal(table.getNumber("COG_X", 100)) < 1) {
 				hoodMotor.set(0);
 				turretMotor.set(0);
 				gearShootAuton = GearAuton.shoot;
@@ -574,7 +618,8 @@ public class Robot extends IterativeRobot {
 			autoHood(hoodAngle);
 			autoShoot(wheelRPM);
 			// turret.set(visionPID(165,table.getNumber("COG_X",0),visionKP));
-			wheelOfDoomMotor.set(-0.45);
+			turretMotor.set(0);
+			wheelOfDoomMotor.set(-0.25);
 			lifterMotor.set(-1);
 			kickerMotor.set(-1);
 
@@ -619,7 +664,9 @@ public class Robot extends IterativeRobot {
 				rightMaster.set(0);
 				leftMaster.setEncPosition(0);
 				rightMaster.setEncPosition(0);
-
+				Timer.delay(.25);
+				System.out.println("encoder " + getAverageEnc());
+				getAverageEnc();
 				shootingAuton = BallAuton.load;
 			}
 			break;
@@ -628,20 +675,20 @@ public class Robot extends IterativeRobot {
 			autoTurret(turretAngle);
 			autoShoot(wheelRPM);
 
-			leftMaster.set(.5);
-			rightMaster.set(-.5);
+			leftMaster.set(.5 * directionMultiplier);
+			rightMaster.set(-.5 * directionMultiplier);
 			climberMaster.set(0.65);
 
-			if (leftMaster.getEncPosition() > 2000) {
+			if (getAverageEnc() > 700) {
 				turretMotor.set(0);
-				System.out.println("State trip into align");
+				// System.out.println("State trip into align");
 				shootingAuton = BallAuton.align;
 			}
 			break;
 
 		case align:
-			leftMaster.set(0.3);
-			rightMaster.set(-0.3);
+			leftMaster.set(0.3 * directionMultiplier);
+			rightMaster.set(-0.3 * directionMultiplier);
 			climberMaster.set(0.65);
 			autoHood(hoodAngle);
 			autoShoot(wheelRPM);
@@ -652,7 +699,6 @@ public class Robot extends IterativeRobot {
 				leftMaster.set(0);
 				rightMaster.set(0);
 				turretMotor.set(0);
-				climberMaster.set(0);
 				shootingAuton = BallAuton.shoot;
 			}
 			break;
@@ -661,9 +707,12 @@ public class Robot extends IterativeRobot {
 			autoHood(hoodAngle);
 			autoShoot(wheelRPM);
 
+			leftMaster.set(0.3 * directionMultiplier);
+			rightMaster.set(-0.3 * directionMultiplier);
+			climberMaster.set(0.65);
 			lifterMotor.set(-1);
 			kickerMotor.set(-1);
-			wheelOfDoomMotor.set(-.45);
+			wheelOfDoomMotor.set(-.55);
 
 			break;
 		}
@@ -679,7 +728,7 @@ public class Robot extends IterativeRobot {
 	}
 
 	double autoDrive(double target) {
-		gyroPID.SetPID(.0075, 0, 0);
+		gyroPID.SetPID(.01, 0, 0);
 
 		driveSpeedLeft = driveLPID.GetOutput(leftMaster.getEncPosition(), -target);
 		driveSpeedRight = driveRPID.GetOutput(rightMaster.getEncPosition(), target);
@@ -737,11 +786,11 @@ public class Robot extends IterativeRobot {
 
 	double autoTurret(double target) {
 		double turretError = turretMotor.getEncPosition() - target;
-		if (turretError > 150) {
+		if (turretError > 125) {
 			turretMotor.set(-.35);
 		}
 
-		else if (turretError < -150) {
+		else if (turretError < -125) {
 			turretMotor.set(.35);
 		}
 
@@ -762,11 +811,10 @@ public class Robot extends IterativeRobot {
 	}
 
 	double autoShoot(double target) {
-		flyPID = flyWheelPID.GetOutput(flyWheelMaster.getSpeed(), wheelRPM);
-		double shootError = target - flyPID;
-
-		flyWheelMaster.set(flyWheelPID.GetOutput(flyWheelMaster.getSpeed(), target));
-
+		double shootError = target - flyWheelMaster.getSpeed();
+		double flyPID = flyWheelPID.GetOutput(-flyWheelMaster.getSpeed(), target);
+		flyWheelMaster.set(flyPID);
+		System.out.println(flyPID);
 		return shootError;
 	}
 
@@ -794,12 +842,12 @@ public class Robot extends IterativeRobot {
 		leftSlave.setCurrentLimit(40);
 		rightSlave.setCurrentLimit(40);
 
-		wheelRPM = 3620;
+		wheelRPM = -3620;
 		flyWheelPID.SetP(0.0025);
 		flyWheelPID.SetI(1.0E-9);
 		flyWheelPID.SetD(0.0072);
-		
-		gearPlace = 477;
+
+		gearPlace = 450;
 	}
 
 	@Override
@@ -829,12 +877,11 @@ public class Robot extends IterativeRobot {
 	}
 
 	void hood() {
-		if(hoodRaise){
-			if(autoHood(640) < 20){
+		if (hoodRaise) {
+			if (autoHood(640) < 20) {
 				hoodRaise = false;
 			}
-		}
-		else{
+		} else {
 			if (oper.getRawButton(rightBumper)) {
 				hoodMotor.set(.5);
 			} else {
@@ -845,7 +892,7 @@ public class Robot extends IterativeRobot {
 				}
 			}
 		}
-		
+
 	}
 
 	void drivebase() {
@@ -903,8 +950,6 @@ public class Robot extends IterativeRobot {
 	}
 
 	void gearManipulator() {
-		// 200 is carry
-		// 800 is drop
 		if (oper.getRawAxis(1) > .2) { // up position for gear arm 1264
 			gearArmMotor.set(0.30);
 		} else {
@@ -951,7 +996,6 @@ public class Robot extends IterativeRobot {
 	}
 
 	void shooter() {
-		
 		if (absVal(table.getNumber("COG_X", 0)) < 2) {
 			visionPID.Reset();
 		}
@@ -962,14 +1006,12 @@ public class Robot extends IterativeRobot {
 				turretMotor.set(0.35);
 			} else {
 				if (driver.getRawButton(buttonSquare)) {
-					turretMotor.set(vPID);
+					turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 
-				} 
-				else {
-					if(turretFlip){
+				} else {
+					if (turretFlip) {
 						autoTurret(-7600);
-					}
-					else{
+					} else {
 						turretMotor.set(0);
 						visionPID.Reset();
 					}
@@ -977,16 +1019,16 @@ public class Robot extends IterativeRobot {
 			}
 		}
 		if (oper.getPOV() == 0) {
-			wheelRPM = 3620;
+			wheelRPM = -3620;
 		}
 		if (oper.getPOV() == 90) {
-			wheelRPM = 3640;
+			wheelRPM = -3640;
 		}
 		if (oper.getPOV() == 180) {
-			wheelRPM = 3660;
+			wheelRPM = -3660;
 		}
 		if (oper.getPOV() == 270) {
-			wheelRPM = 3680;
+			wheelRPM = -3680;
 		}
 
 		ballIntakeMotor.set(-(deadBand(oper.getRawAxis(leftBumper)))); // Axis
@@ -996,8 +1038,8 @@ public class Robot extends IterativeRobot {
 		// shooting
 
 		if (oper.getRawButton(buttonTriangle)) {
-			flyWheelMaster.set(flyWheelSpeed);
-			flyWheelMaster.set(-flyWheelPID.GetOutput(flyWheelMaster.getSpeed(), flyWheelSpeed));
+			// autoShoot(wheelRPM);
+			flyWheelMaster.set(flyWheelPID.GetOutput(flyWheelMaster.getSpeed(), wheelRPM));
 			lifterMotor.set(-1);
 			kickerMotor.set(-1);
 
@@ -1010,7 +1052,7 @@ public class Robot extends IterativeRobot {
 		if (oper.getRawButton(buttonCircle)) {
 			wheelOfDoomMotor.set(-0.75);
 		} else {
-			if (oper.getRawButton(rightAnalog)) {
+			if (oper.getRawButton(buttonPS)) {
 				wheelOfDoomMotor.set(1);
 			} else {
 				wheelOfDoomMotor.set(0);
@@ -1057,19 +1099,23 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Turret Encoder", turretMotor.getEncPosition());
 		SmartDashboard.putNumber("Front Left Encoder", leftMaster.getEncPosition());
 		SmartDashboard.putNumber("Front Right Encoder", rightMaster.getEncPosition());
-		
-		//SmartDashboard.putNumber("Speed", flyWheelMaster.getSpeed());
+
+		SmartDashboard.putNumber("Speed", flyWheelMaster.getSpeed());
 		// SmartDashboard.putNumber("COG_Y", table.getNumber("COG_Y",0));
 		// gearArmMotor.getEncPosition());
-		//SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
+		SmartDashboard.putNumber("Gyro Angle", horzGyro.getAngle());
 		// SmartDashboard.putNumber("Back Left Encoder",
 		// leftSlave.getEncPosition());
-		
-		//SmartDashboard.putNumber("RightM current", rightMaster.getOutputCurrent());
-		//SmartDashboard.putNumber("leftM current", leftMaster.getOutputCurrent());
-		//SmartDashboard.putNumber("RightS current", rightSlave.getOutputCurrent());
-		//SmartDashboard.putNumber("leftS current", leftSlave.getOutputCurrent());
-		//SmartDashboard.putNumber("turn speed", turnSpeed);
+
+		// SmartDashboard.putNumber("RightM current",
+		// rightMaster.getOutputCurrent());
+		// SmartDashboard.putNumber("leftM current",
+		// leftMaster.getOutputCurrent());
+		// SmartDashboard.putNumber("RightS current",
+		// rightSlave.getOutputCurrent());
+		// SmartDashboard.putNumber("leftS current",
+		// leftSlave.getOutputCurrent());
+		// SmartDashboard.putNumber("turn speed", turnSpeed);
 		// SmartDashboard.putNumber("Back Right Encoder",
 		// rightSlave.getEncPosition());
 		// SmartDashboard.putNumber("Fly Wheel Master Current",
@@ -1097,6 +1143,10 @@ public class Robot extends IterativeRobot {
 		// // turnSpeed = pref.getDouble("turnSpeed", 0);
 		// turnValue = pref.getDouble("turnValue", 0);
 		//
+		// flyP = pref.getDouble("flyP", 0);
+		// flyI = pref.getDouble("flyI", 0);
+		// flyD = pref.getDouble("flyD", 0);
+		//
 		// gyroPID.SetP(gyroP);
 		// gyroPID.SetI(gyroI);
 		// gyroPID.SetD(gyroD);
@@ -1115,6 +1165,10 @@ public class Robot extends IterativeRobot {
 		// turretPID.SetP(turretP);
 		// turretPID.SetI(turretI);
 		// turretPID.SetD(turretD);
+
+		// flyWheelPID.SetP(flyP);
+		// flyWheelPID.SetI(flyI);
+		// flyWheelPID.SetD(flyD);
 
 	}
 }
