@@ -127,8 +127,10 @@ public class Robot extends IterativeRobot {
 	double distance, turnValue;
 	double driveSpeedLeft, driveSpeedRight, turnSpeed;
 
-	boolean shoot;
+	double cogX;
 
+	boolean shoot;
+	
 	boolean camNum = false, autonEncReset = true;
 	// double flyWheelRPM = -4400;
 
@@ -308,6 +310,7 @@ public class Robot extends IterativeRobot {
 
 		gearCarry = 50;
 		gearDrop = 1100;
+
 	}
 
 	@Override
@@ -321,7 +324,7 @@ public class Robot extends IterativeRobot {
 		kickerMotor.set(0);
 		wheelOfDoomMotor.set(0);
 		flyWheelMaster.set(0);
-
+		
 		switch (autoSelected) {
 		case debug:
 			gyroPID.Reset();
@@ -386,7 +389,7 @@ public class Robot extends IterativeRobot {
 	// when boolean blue = true, the bot is on the blue side
 	// when boolean blue = false, bot is on red side
 	void shootingAutoInit(boolean blue) {
-		wheelRPM = -4110;
+		wheelRPM = -4175;
 		flyWheelPID.SetP(.0025);
 		flyWheelPID.SetI(0);
 		flyWheelPID.SetD(0.015);
@@ -396,8 +399,8 @@ public class Robot extends IterativeRobot {
 
 		if (blue) {
 			turnAngle = -85;
-			turretAngle = -3000;
-			forward = -5550;
+			turretAngle = -2825;
+			forward = -5250;
 			directionMultiplier = 1;
 			frontWheelSolenoid.set(true);
 			backWheelSolenoid.set(false);
@@ -406,7 +409,7 @@ public class Robot extends IterativeRobot {
 		else {
 			turnAngle = 85;
 			turretAngle = -2600;
-			forward = 5800;
+			forward = 4800;
 			directionMultiplier = -1;
 			frontWheelSolenoid.set(false);
 			backWheelSolenoid.set(true);
@@ -434,7 +437,7 @@ public class Robot extends IterativeRobot {
 
 		hoodAngle = 785;
 		//FLYWHEEL IS NEGATIVE
-		wheelRPM = -4110;
+		wheelRPM = -4210;
 		gearPlace = 435;
 
 		flyWheelPID.SetP(.0025);
@@ -462,7 +465,7 @@ public class Robot extends IterativeRobot {
 
 			if (blue) {
 				turretAngle = -2050;
-				wheelRPM = -4250;
+				wheelRPM = -4350;
 
 			} else {
 				turretAngle = -150;
@@ -507,6 +510,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 		smartDash();
+		cogX = absVal(table.getNumber("COG_X", 0));
 		if (autoSelected.equals(gearAuton)) {
 			gearAuto();
 		}
@@ -607,7 +611,8 @@ public class Robot extends IterativeRobot {
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 			autoShoot(wheelRPM);
 			
-			if (absVal(table.getNumber("COG_X", 100)) < 1 && absVal(table.getNumber("COG_X", 100)) != 0.0 ) {				hoodMotor.set(0);
+			if (cogX < 1 && cogX != 0.0 ) {
+				hoodMotor.set(0);
 				turretMotor.set(0);
 				gearShootAuton = GearAuton.shoot;
 			}
@@ -686,15 +691,15 @@ public class Robot extends IterativeRobot {
 			break;
 
 		case align:
-			leftMaster.set(0.3 * directionMultiplier);
-			rightMaster.set(-0.3 * directionMultiplier);
+			leftMaster.set(0.45 * directionMultiplier);
+			rightMaster.set(-0.45 * directionMultiplier);
 			climberMaster.set(0.65);
 			autoHood(hoodAngle);
 			autoShoot(wheelRPM);
 
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 
-			if (absVal(table.getNumber("COG_X", 100)) < 1 && absVal(table.getNumber("COG_X", 100)) != 0.0 ) {
+			if (cogX < 1 && cogX != 0.0 ) {
 				leftMaster.set(0);
 				rightMaster.set(0);
 				turretMotor.set(0);
@@ -828,7 +833,7 @@ public class Robot extends IterativeRobot {
 
 	public void teleopInit() {
 		ballIntakeSolenoid.set(false);
-		turretFlip = false;
+		turretFlip = true;
 
 		flyWheelMaster.setEncPosition(0);
 		rightMaster.setEncPosition(0);
@@ -918,8 +923,8 @@ public class Robot extends IterativeRobot {
 		}
 
 		if (driver.getRawButton(rightTrigger)) { // half and half
-			frontWheelSolenoid.set(true);
-			backWheelSolenoid.set(false);
+			frontWheelSolenoid.set(false);
+			backWheelSolenoid.set(true);
 		}
 
 		if (driver.getRawButton(1)) {
