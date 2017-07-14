@@ -606,9 +606,8 @@ public class Robot extends IterativeRobot {
 			autoHood(hoodAngle);
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 			autoShoot(wheelRPM);
-
-			if (absVal(table.getNumber("COG_X", 100)) < 1) {
-				hoodMotor.set(0);
+			
+			if (absVal(table.getNumber("COG_X", 100)) < 1 && absVal(table.getNumber("COG_X", 100)) != 0.0 ) {				hoodMotor.set(0);
 				turretMotor.set(0);
 				gearShootAuton = GearAuton.shoot;
 			}
@@ -695,7 +694,7 @@ public class Robot extends IterativeRobot {
 
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 
-			if (absVal(table.getNumber("COG_X", 100)) < 1) {
+			if (absVal(table.getNumber("COG_X", 100)) < 1 && absVal(table.getNumber("COG_X", 100)) != 0.0 ) {
 				leftMaster.set(0);
 				rightMaster.set(0);
 				turretMotor.set(0);
@@ -1039,7 +1038,7 @@ public class Robot extends IterativeRobot {
 
 		if (oper.getRawButton(buttonTriangle)) {
 			// autoShoot(wheelRPM);
-			flyWheelMaster.set(flyWheelPID.GetOutput(flyWheelMaster.getSpeed(), wheelRPM));
+			autoShoot(wheelRPM);
 			lifterMotor.set(-1);
 			kickerMotor.set(-1);
 
