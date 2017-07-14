@@ -408,8 +408,8 @@ public class Robot extends IterativeRobot {
 
 		else {
 			turnAngle = 85;
-			turretAngle = -2600;
-			forward = 4800;
+			turretAngle = -2300;
+			forward = 6100;
 			directionMultiplier = -1;
 			frontWheelSolenoid.set(false);
 			backWheelSolenoid.set(true);
@@ -458,18 +458,17 @@ public class Robot extends IterativeRobot {
 
 		case center:
 			turnAngle = 0;
-			forward = -3300;
 			reverse = 2000;
-			
+			forward = -3450;
 			shoot = true;
 
 			if (blue) {
 				turretAngle = -2050;
-				wheelRPM = -4350;
+				wheelRPM = -4400;
 
 			} else {
 				turretAngle = -150;
-				wheelRPM = -4430;
+				wheelRPM = -4450;
 				spin = true;
 				//FLYWHEEL IS NEGATIVE
 				
@@ -478,7 +477,7 @@ public class Robot extends IterativeRobot {
 
 		case right:
 			turnAngle = -60;
-			forward = -2900;
+			forward = -3050;
 			reverse = 1000;
 			turretAngle = -7600;
 			wheelRPM = 0;
@@ -611,7 +610,7 @@ public class Robot extends IterativeRobot {
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 			autoShoot(wheelRPM);
 			
-			if (cogX < 1 && cogX != 0.0 ) {
+			if (cogX < 1 && cogX > 0.001 ) {
 				hoodMotor.set(0);
 				turretMotor.set(0);
 				gearShootAuton = GearAuton.shoot;
@@ -679,8 +678,8 @@ public class Robot extends IterativeRobot {
 			autoTurret(turretAngle);
 			autoShoot(wheelRPM);
 
-			leftMaster.set(.5 * directionMultiplier);
-			rightMaster.set(-.5 * directionMultiplier);
+			leftMaster.set(.75 * directionMultiplier);
+			rightMaster.set(-.75 * directionMultiplier);
 			climberMaster.set(0.65);
 
 			if (getAverageEnc() > 700) {
@@ -699,7 +698,7 @@ public class Robot extends IterativeRobot {
 
 			turretMotor.set(visionPID.GetOutput(table.getNumber("COG_X", 0), 0));
 
-			if (cogX < 1 && cogX != 0.0 ) {
+			if (cogX < 1 && cogX > 0.001 ) {
 				leftMaster.set(0);
 				rightMaster.set(0);
 				turretMotor.set(0);
